@@ -1,4 +1,4 @@
-# Past-coding-work
+# Past coding work
 
 Please see the files here for examples of past work in both R and Python. 
 
