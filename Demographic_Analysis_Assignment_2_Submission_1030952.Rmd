@@ -1,0 +1,958 @@
+---
+title: "Demographic Analysis Problem Set Assignment"
+author: 'Candidate Number: 1030952'
+output:
+  html_document:
+    df_print: paged
+  pdf_document: default
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Question 1
+
+In an influential article, Oeppen and Vaupel (2002) highlighted a remarkable demographic trend. Looking at data from life tables for the period spanning 1840-2000, they found that female life expectancy in the record-holding country in a given year had risen for 160 years at a steady pace of almost 3 months per year.
+
+a) Using all available data from the Human Mortality Database (HMD), build a dataset, similarly to Oeppen and Vaupel (2002), for record-holding female life expectancy for the period from 1840-2016.
+
+```{r, echo = TRUE}
+#Load the relevant package into the environment.
+library(HMDHFDplus)
+
+#Set the working directory.
+setwd("C:/Users/yongc/Documents/Work Files/University of Oxford/Course Material/Demographic Analysis/Assignment 2")
+
+#The following produces a database for female record-holding life expectancy.
+country.vec <- getHMDcountries()
+life.expec <- rep(NULL)
+rec.ex <- rep(NULL)
+yearcount <- 1840
+max.ex <- rep(NULL)
+data.ex <- matrix(nrow = 177, ncol = 1)
+
+#Note: requires username and password to run.
+for (yearcount in c(1840:2016)) {
+  for (life.expec in rec.ex) {
+    for (countries in country.vec) {
+      HMD <- readHMDweb(CNTRY = countries, item = "fltper_1x1", username = "Enter Username", password = "Enter Password")
+      years <- subset(HMD, Year == yearcount, select = c("ex"))
+      if (yearcount > 2016) {
+        break
+      } 
+      else if (nrow(years) != 0) {
+        rec.ex <- max(cbind(years))
+      } 
+      else {
+        next
+      }
+      life.expec[rec.ex] <- rec.ex
+    }
+    max.ex <- max(life.expec, na.rm = TRUE)
+    yearcount <- yearcount + 1
+  }
+data.ex <- rbind(data.ex, max.ex)
+}
+
+#Tidy up the resulting data and its presentation.
+date.ex <- matrix(1840:2016, byrow = FALSE)
+q1matrixf <- cbind(date.ex, data.ex)
+colnames(q1matrixf) <- c("Year", "Max.ex")
+
+#Save the file in the working directory.
+# write.table(q1matrixf, file = "question1dataf.txt", row.names = FALSE, col.names = TRUE)
+
+#We now have built the database needed for record holding life expectancy in the record holding country from 1840 to 2016.
+q1dataf <- read.table("question1dataf.txt", header = TRUE)
+head(q1dataf)
+tail(q1dataf)
+
+```
+
+b) Plot the trend in this indicator and compare your estimates for the slope of the linear regression line obtained using the HMD data for the period from 1840-2000 with those obtained by Oeppen and Vaupel.
+
+```{r, echo = TRUE}
+#Hint: Oeppen and Vaupel omitted data for 1914-1919 (World War I and influenza) and 1939-1945 (World War II).
+```
+
+Oeppen and Vaupel (2002) also make mention of male life expectancy, so the same codes were run replacing "fltper_1x1" with "mltper_1x1" to obtain a corresponding dataset for record-holding male life expectancy in the record holding country for the same time period.
+
+```{r, echo = TRUE}
+#The code for male life expecancy is equivalent to the code for female life expectancy, shown here.
+for (yearcount in c(1840:2016)) {
+  for (life.expec in rec.ex) {
+    for (countries in country.vec) {
+      HMD <- readHMDweb(CNTRY = countries, item = "mltper_1x1", username = "Enter Username", password = "Enter Password")
+      years <- subset(HMD, Year == yearcount, select = c("ex"))
+      if (yearcount > 2016) {
+        break
+      } 
+      else if (nrow(years) != 0) {
+        rec.ex <- max(cbind(years))
+      } 
+      else {
+        next
+      }
+      life.expec[rec.ex] <- rec.ex
+    }
+    max.ex <- max(life.expec, na.rm = TRUE)
+    yearcount <- yearcount + 1
+  }
+data.ex <- rbind(data.ex, max.ex)
+}
+
+#Again, tidy up the resulting data and its presentation.
+date.ex <- matrix(1840:2016, byrow = FALSE)
+q1matrixm <- cbind(date.ex, data.ex)
+colnames(q1matrixm) <- c("Year", "Max.ex")
+
+#Save the file in the working directory.
+# write.table(q1matrixm, file = "question1datam.txt", row.names = FALSE, col.names = TRUE) 
+
+q1datam <- read.table("question1datam.txt", header = TRUE)
+head(q1datam)
+tail(q1datam)
+```
+
+We now need to subset our data to only include the period from 1840 to 2000 for the next piece of analysis.
+
+```{r, echo = TRUE}
+#We subset the data from only 1840 to 2000 for both male and female life expectancy.
+q1dataf.sub1 <- q1dataf[-c(162:177),]
+q1datam.sub1 <- q1datam[-c(162:177),]
+
+#Check the new truncated dataset.
+tail(q1dataf.sub1)
+tail(q1datam.sub1)
+```
+
+The OLS regression of record-holding female and male life expectancy on years from 1840 to 2000 are as follows.
+
+```{r, echo = TRUE}
+#The linear model for female record-holding life expectancy is as follows.
+OLSmod1f <- lm(formula = Max.ex ~ Year, data = q1dataf.sub1)
+summary(OLSmod1f)
+```
+
+Running a regression yields the model $e_{x}^{female} = 0.194 t - 304$ where $t = Year$ with the p-value of the slope being $<0.001$ rendering the relationship statistically significant $($reject $H_{0}: \beta = 0)$. Furthermore $R^{2} = 0.950$ suggests that years passed accounts for almost all the variation in record-holding female life expectancy, as seen from the plot below. Although there is visible heteroscedasticity observed in earlier years, we can say that on average every year passed seems to increase expected record-holding female life expectancy by 0.19 years or under two and a half months, close to Oeppen and Vaupel's estimate.
+
+Oeppen and Vaupel's omission of data for 1914-1919 (World War I and influenza) and 1939-1945 (World War II) may explain why the $R^{2}$ values found here are slightly lower than the ones reported in their 2002 paper. While their $R^{2} = 0.992$, this analysis found that $R^{2} = 0.950$ instead. That said, the values are still extremely high and does little to discredit the strength of the relationship which Oeppen and Vaupel found.
+
+```{r, echo = TRUE}
+#Female life expectancy plot
+plot(q1dataf.sub1, main = "Record-holding Female Life Expectancy for 1840 to 2000", xlab = "Year", ylab = "Record ex", col = "Red")
+abline(a = -304.5, b = 0.1937)
+```
+
+For completeness' sake, the same model is run with data for male life expectancy, with equally strong results found.
+
+```{r, echo = TRUE}
+#Linear model for male record-holding life expectancy.
+OLSmod1m <- lm(formula = Max.ex ~ Year, data = q1datam.sub1)
+summary(OLSmod1m)
+```
+
+Running a regression yields the model $e_{x}^{male} = 0.173 t - 267$ where $t = Year$ with the p-value of the slope being $<0.001$ rendering the relationship statistically significant $($reject $H_{0}: \beta = 0)$. Furthermore $R^{2} = 0.963$ suggests that years passed accounts for almost all the variation in record-holding male life expectancy. On average, every year passed increases expected record-holding male life expectency by about 0.17 years or just over two months.
+
+```{r, echo = TRUE}
+#Male life expectancy plot
+plot(q1datam.sub1, main = "Record-holding Male Life Expectancy for 1840 to 2000", xlab = "Year", ylab = "Record ex", col = "Blue")
+abline(a = -267.4, b = 0.1727)
+```
+
+c) Now analyse the pattern of change in record-holding life expectancy for the period between 2000-2016. Do the patterns of linear increase observed by Oeppen and Vaupel until 2000 continue in the more recent period. Do patterns in the more recent period indicate a stalling in life expectancy improvements?
+
+Extending the analysis and observing  record-holding life expectancy for the years 2000 to 2016 does not show a stalling of life expectancy.
+
+```{r, echo = TRUE}
+#We first subset the data to use data from years 2000 to 2015.
+q1dataf.sub2 <- q1dataf[-c(1:160),]
+q1datam.sub2 <- q1datam[-c(1:160),]
+
+#Check the data
+tail(q1dataf.sub2)
+tail(q1datam.sub2)
+
+#Run an OLS model on the truncated female dataset with its corresponding plot.
+OLSmod2f <- lm(formula = Max.ex ~ Year, data = q1dataf.sub2)
+summary(OLSmod2f)
+plot(q1dataf.sub2, main = "Record-holding Female Life Expectancy for 2000 to 2016", xlab = "Year", ylab = "Record ex", col = "Red")
+abline(a = -205.5, b = 0.1451)
+```
+
+The results above show that female record-holding life expectancy for the years 2000 to 2016 are not stalling $(e_{x}^{female} = 0.145 t - 205)$. Indeed, both $Adj \; R^{2} = 0.945$ and $\beta = 0.145$ show that the variation in female record-holding life expectancy is still extremely strongly explained by years passed, and that the relationship continues to be a positive one. Although the coefficient $0.145 < 0.194$ seems to indicate a slowing of record life expectancy for females (from an additional 2.3 months to an additional 1.7 months per marginal year for 2000 to 2015), it is by no means stalling or plateauing.
+
+```{r, echo = TRUE}
+#The same is run for the truncated male dataset.
+OLSmod2m <- lm(formula = Max.ex ~ Year, data = q1datam.sub2)
+summary(OLSmod2m)
+plot(q1datam.sub2, main = "Record-holding Male Life Expectancy for 2000 to 2016", xlab = "Year", ylab = "Record ex", col = "Blue")
+abline(a = -361.80784, b = 0.21983)
+```
+
+For the corresponding life expectancy estimates for males, $e_{x}^{male} = 0.220 t - 361$ with $Adj \; R^{2} = 0.851$ show that although the degree of variation explained by the marginal year passed is reduced, the slope coefficient has actually increased, suggesting faster increase in record-holding male life expectancy in the recent period compared to the earlier period; not stalling by any means. This analysis notes that all slope coefficients continue to be statistically significant with p-value $< 0.001$.
+
+## Question 2
+
+The file 'ESPasfrRRbo.txt' contains period age-specific fertility rates by birth order (parity) for Spain for the period from 1975-2016. The file 'ESPmabRRbo.txt' contains period mean ages at birth by birth order (parity) and period mean ages at birth by birth order by age 40 for the same period for Spain.
+
+a) Using these data, compute the period total fertility rate (TFR) for Spain for 1975-2016. Compute the TFR by birth order or parity. Plot the trends over this period.
+
+The TFR is defined as the number of births for women in the age-interval [x, x+n) divided by the number of women in the age-interval [x, x+n) in the mid-year of the same period. In other words, it is the average number of children a woman would bear if she experienced, at each age, the particular set of age-specific fertiltity rates (ASFRs) under the condition that she survives throughout the whole reproductive age range. It is an age-standardised measure that assumes all ages have the same weight.
+
+Since we are given ASFR data, the TFR for a given year can then be calculated by adding up all of the ASFR values across all ages in the given year; i.e. $TFR_{i} = \sum ASFR_{i}$ where $i$ represents years from 1975 to 2016 inclusive.
+
+```{r, echo = TRUE}
+#Read ASFR data and transform it to deal with the problems of open age intervals 12- and 55+ in the dataset.
+asfr <- read.table("ESPasfrRRbo.txt", skip = 2, header = TRUE)
+asfr <- transform(asfr, Age = as.numeric(sub("[+-]", "", as.character(Age))))
+
+#Check transformed dataset, taking note of the open age intervals.
+head(asfr)
+tail(asfr)
+
+#Code to generate Spain's TFR from 1975 to 2016.
+keep1 <- c("Year", "ASFR")
+asfr1 <- asfr[keep1]
+tfr <- rep(NULL)
+yearctr <- 1975
+
+for (yearctr in c(1975:2016)) {
+  asfri <- asfr1[asfr1$Year == yearctr, ]
+  tfri <- sum(asfri$ASFR)
+  tfr <- rbind(tfr, tfri)
+  yearctr <- yearctr + 1
+}
+
+date <- matrix(1975:2016, byrow = FALSE)
+tfr.all <- cbind(date, tfr)
+colnames(tfr.all) <- c("Year", "TFR")
+rownames(tfr.all) <- c()
+
+#Check the data
+head(tfr.all)
+tail(tfr.all)
+
+#Plot TFR for Spain over the period.
+plot(tfr.all, type = "l", main = "TFR for Spain from 1975 to 2016")
+```
+
+We are also given ASFR by birth order which allows us to decompose the yearly ASFR figures. It tells us that in a given year and age group's ASFR, what proportion of it comprises first, second, third, fourth, and fifth and above births. We can thus decompose the TFR by birth order for the period.
+
+While it is by convention that for the computation of ASFR/TFR by birth order we divide the number of births of the $n$'th child in an age group by all women in the age group, it is in fact more accurate to divide the number of births of the $n$'th child only by all women who have had an $n-1$'th child as it is this which is the population exposed. However, this analysis will proceed using conventional computation method for ease of comparison. Differing denominators make meaningful comparisons difficult.
+
+```{r, echo = TRUE}
+#Repeat the code to ascertain TFR by birth order.
+keep2 <- c("Year", "ASFR", "ASFR1", "ASFR2", "ASFR3", "ASFR4", "ASFR5p")
+asfr2 <- asfr[keep2]
+
+tfrbbo <- rep(NULL)
+yearctr <- 1975
+
+for (yearctr in c(1975:2016)) {
+  asfrbboi <- asfr2[asfr2$Year == yearctr, ]
+  tfri <- sum(asfrbboi$ASFR)
+  tfrbbo1i <- sum(asfrbboi$ASFR1)
+  tfrbbo2i <- sum(asfrbboi$ASFR2)
+  tfrbbo3i <- sum(asfrbboi$ASFR3)
+  tfrbbo4i <- sum(asfrbboi$ASFR4)
+  tfrbbo5pi <- sum(asfrbboi$ASFR5p)
+  tfrbboi <- cbind(tfri, tfrbbo1i, tfrbbo2i, tfrbbo3i, tfrbbo4i, tfrbbo5pi)
+  tfrbbo <- rbind(tfrbbo, tfrbboi)
+  yearctr <- yearctr + 1
+}
+
+#Tidy the data up.
+date <- matrix(1975:2016, byrow = FALSE)
+tfrbbo.all <- cbind(date, tfrbbo)
+colnames(tfrbbo.all) <- c("Year", "TFR", "TFR1", "TFR2", "TFR3", "TFR4", "TFR5p")
+
+#Check the data.
+head(tfrbbo.all)
+tail(tfrbbo.all)
+
+#Transform the data into a format more appropriate for visualisation.
+#Data for TFR1
+tfr1plot <- tfrbbo.all[, c(3), drop = FALSE]
+tfr1plot <- cbind(date, tfr1plot)
+
+#Data for TFR2
+tfr2plot <- tfrbbo.all[, c(3, 4), drop = FALSE]
+tfr2plot <- rowSums(tfr2plot)
+tfr2plot <- cbind(date, tfr2plot)
+
+#Data for TFR3
+tfr3plot <- tfrbbo.all[, c(3, 4, 5), drop = FALSE]
+tfr3plot <- rowSums(tfr3plot)
+tfr3plot <- cbind(date, tfr3plot)
+
+#Data for TFR4
+tfr4plot <- tfrbbo.all[, c(3, 4, 5, 6), drop = FALSE]
+tfr4plot <- rowSums(tfr4plot)
+tfr4plot <- cbind(date, tfr4plot)
+
+#Data for TFR5p
+tfr5pplot <- tfrbbo.all[, c(3, 4, 5, 6, 7), drop = FALSE]
+tfr5pplot <- rowSums(tfr5pplot)
+tfr5pplot <- cbind(date, tfr5pplot)
+
+#Plot of TFR by birth order.
+plot(tfr5pplot, main = "TFR for Spain by birth order", xlab = "Year", ylab = "TFR", ylim = c(0.5, 2.9), type = "l", col = "blue")
+lines(tfr4plot, col = "green")
+lines(tfr3plot, col = "orange")
+lines(tfr2plot, col = "red")
+lines(tfr1plot, col = "brown")
+legend(2002, 2.9, legend = c("Fifth births and above", "Fourth births", "Third births", "Second births", "First births"), col = c("blue", "green", "orange", "red", "brown"), lty = 1, cex = 0.8)
+```
+
+We note that the plot of the blue line (TFR of fifth births and above) is equivalent to the plot for TFR for all births, since the plot of fifth births and above is simply constructed as the sum of all births regardless of birth order. The distance between two lines in a given single year is the TFR of the respective birth order indicated by the upper line in the figure above. For instance, the distance between the red line and brown line for a given year is the TFR of second births only. The red line on its own represents the sum of first and second births.
+
+b) Using the data provided and illustrating trends using figures, comment on how the quantum and tempo of fertility changed in Spain over this period, paying attention to changes by birth order.
+
+With reference to the figure given in part (a) above, we can see that the year-on-year quantum of fertility has been falling from 1975 to the mid-1990s. After that, the quantum of fertility increased slowly but that the fertility level still remains below the replacement level of 2.1. 
+
+However, this trend may be subject to tempo distortions. Tempo distortions are caused by changes in the mean age of childbearing (MAC). If births are delayed, for example, the TFR for that given year might be artificially reduced even if the total numner of children a woman has or will have has not changed.
+
+We first plot MAC for Spain by birth order to comment on tempo changes by birth order.
+```{r, echo = TRUE}
+#Read data for MAC.
+mac <- read.table("ESPmabRRbo.txt", skip = 2, header = TRUE)
+mac <- mac[-c(8, 9, 10, 11, 12, 13)]
+colnames(mac) <- c("Year", "MAC", "MAC1", "MAC2", "MAC3", "MAC4", "MAC5p")
+
+#Check data.
+head(mac)
+
+#Subset the MAC by birth order data for visualisation purposes.
+macplot <- mac[, c(1, 2), drop = FALSE]
+mac1plot <- mac[, c(1, 3), drop = FALSE]
+mac2plot <- mac[, c(1, 4), drop = FALSE]
+mac3plot <- mac[, c(1, 5), drop = FALSE]
+mac4plot <- mac[, c(1, 6), drop = FALSE]
+mac5pplot <- mac[, c(1, 7), drop = FALSE]
+
+#Plot MAC over the period of 1975 to 2016.
+plot(macplot, type = "l", xlab = "Year", ylab = "MAC", main = "MAC for Spain by birth order", ylim = c(24.5, 36.5), col = "black")
+lines(mac1plot, col = "brown")
+lines(mac2plot, col = "red")
+lines(mac3plot, col = "orange")
+lines(mac4plot, col = "green")
+lines(mac5pplot, col = "blue")
+legend(2004, 29, legend = c("All births", "Fifth births and up", "Fourth births", "Third births", "Second births", "First births"), col = c("black", "blue", "green", "orange", "red", "brown"), lty = 1, cex = 0.8)
+```
+
+The plot above shows clearly that, in aggregate terms, the MAC has been rising steadily over the whole period. The rapid fall in TFR from 1975 to the mid-1990s, therefore, might be at least partially explained by the fact that Spanish women were on average delaying their births.
+
+Looking now at birth order, we can see from the above plot that the mean age for fifth and above births has not changed significantly over the period, even falling slightly after the mid-1990s to 2016. Although the MAC for fourth and for third births rose from 1975 to the mid-1990s, they also fell slightly for the period from the mid-1900s to 2016. After the mid-1990s, women who had at least two children seemed to be having their third, fourth, or fifth and above child at an earlier age.
+
+However, for the cases of first and second births, the data shows that women have been postponing births for the whole period analysed. While at 1975 women were on average having their first child at age 25 and second child at age 28, in 2016 they were on average having their first child at age 31 and at age 33. The tempo of childbearing has therefore slowed down significantly.
+
+c) Demographers often criticise the period TFR as an indicator of quantum of fertility as it suffers from tempo distortions. Compute the tempo-adjusted TFR for each birth order/parity using the Bongaarts-Feeney adjustment. How do we interpret the adjusted TFR values and what do they reveal about fertility dynamics in Spain over this period? Is the adjusted TFR value computed using the Bongaarts-Feeney adjustment completely free of tempo distortions?
+
+To account for tempo distortions affecting the period TFR, we can use the Bongaarts-Feeney tempo-adjusted TFR measure, defined as
+$$TFR' = \frac{TFR}{1 - r}$$
+where $r$ is the the absolute tempo change in mean age at birth. This will be calculated for each birth order such that $r_{i, j}$ is the change in mean age of childbearing between the beginning and end of year $i$ for birth order $j$. $TFR'$ is therefore the total fertility rate that would be observed had there been no change in the timing of births. Spain's $r_{i, j}$ can be computed using the given data on MAC by birth order.
+```{r, echo = TRUE}
+#Calculate r for each birth order and for all births
+r <- c(NA, diff(mac$MAC, lag = 1, differences = 1))
+r1 <- c(NA, diff(mac$MAC1, lag = 1, differences = 1))
+r2 <- c(NA, diff(mac$MAC2, lag = 1, differences = 1))
+r3 <- c(NA, diff(mac$MAC3, lag = 1, differences = 1))
+r4 <- c(NA, diff(mac$MAC4, lag = 1, differences = 1))
+r5p <- c(NA, diff(mac$MAC5p, lag = 1, differences = 1))
+r <- cbind(r, r1, r2, r3, r4, r5p)
+colnames(r) <- c("r", "r1", "r2", "r3", "r4", "r5p")
+
+#Object tfrbbo should still be in the environment to use for computation of tempo-adjusted TFR.
+colnames(tfrbbo) <- c("TFR", "TFR1", "TFR2", "TFR3", "TFR4", "TFR5p")
+bftfr <- tfrbbo/(1-r)
+bftfr <- cbind(date, bftfr)
+
+#Check the data.
+head(bftfr)
+
+#Subset the BFTFR data for visualisation.
+bftfrplot <- bftfr[, c(1, 2), drop = FALSE]
+bftfr1plot <- bftfr[, c(1, 3), drop = FALSE]
+bftfr2plot <- bftfr[, c(1, 4), drop = FALSE]
+bftfr3plot <- bftfr[, c(1, 5), drop = FALSE]
+bftfr4plot <- bftfr[, c(1, 6), drop = FALSE]
+bftfr5pplot <- bftfr[, c(1, 7), drop = FALSE]
+
+#Format non-adjusted TFR for comparison.
+tfr <- cbind(date, tfrbbo)
+tfrplot <- tfr[, c(1, 2), drop = FALSE]
+tfr1plot <- tfr[, c(1, 3), drop = FALSE]
+tfr2plot <- tfr[, c(1, 4), drop = FALSE]
+tfr3plot <- tfr[, c(1, 5), drop = FALSE]
+tfr4plot <- tfr[, c(1, 6), drop = FALSE]
+tfr5pplot <- tfr[, c(1, 7), drop = FALSE]
+```
+
+For the following six plots, the dashed line represents the unadjusted TFR - shown previously in part (a) - and the solid line represents the tempo-adjusted TFR which has just been calculated in part (c). The plots for all births and the plots for each birth order are shown in separately below for clarity. The codes for order-specific tempo-adjusted TFRs have been omitted (though viewable in the .Rmd file) for cleaner presentation. Their structure is exactly the same as the code for tempo-adjusted TFR for all births shown here:
+```{r, echo = TRUE}
+#Plot of adjusted TFR and non-adjusted TFR for all births.
+plot(bftfrplot, ylim = c(1.1, 2.8), type = "l", col = "black", main = "TFR for all births", ylab = "TFR", xlab = "Year")
+lines(tfrplot, lty = 2, col = "black")
+legend(2000, 2.8, legend = c("Unadjusted TFR", "Tempo-adjusted TFR"), col = c("black", "black"), lty = 2:1, cex = 0.8)
+```
+
+From the above plot representing TFR for all births in Spain for 1975 to 2016, the tempo-adjusted TFR shows a different quantum of fertilty compared to the unadjusted TFR values. While fertility rates continue to show a decline since 1975, the adjusted TFR is almost consistently higher than the unadjusted TFR for all births from about 1990 to 2016. This would mean that, taking the tempo of fertility into account, the post-1990 quantum of fertility is actually much higher than the initial figures suggest. The difference in the adjusted and unadjusted TFRs is attributable to the rising mean age at childbirth, and reveals that the low TFR values calculated in part (a) is partially due to a rising MAC rather than instead of to a true decline in the fertility levels in the Spanish population.
+
+```{r, echo = FALSE}
+#Plot of TFR's for  first births.
+plot(bftfr1plot, ylim = c(0.55, 1.3), type = "l", col = "brown", main = "TFR for first births", ylab = "TFR", xlab = "Year")
+lines(tfr1plot, lty = 2, col = "brown")
+legend(2000, 1.3, legend = c("Unadjusted TFR", "Tempo-adjusted TFR"), col = c("brown", "brown"), lty = 2:1, cex = 0.8)
+
+#Plot of TFR's for  second births.
+plot(bftfr2plot, ylim = c(0.4, 0.85), type = "l", col = "red", main = "TFR for second births", ylab = "TFR", xlab = "Year")
+lines(tfr2plot, lty = 2, col = "red")
+legend(2000, 0.85, legend = c("Unadjusted TFR", "Tempo-adjusted TFR"), col = c("red", "red"), lty = 2:1, cex = 0.8)
+```
+
+While the adjusted and unadjusted TFRs for all births may be argued to be relatively similar - a decreasing trend in the TFR before slightly increasing again - the plots of tempo-adjusted and unadjusted TFRs for first and second births show vastly different fertility patterns and quantums. Apart from before 1980 and in the years of 2007-8 (for both first births and second births), adjusted TFR almost always exceeded unadjusted TFR. This was because, according to the plot of MAC by birth order, mothers in Spain were most significantly postponing their first and second births, thus contributing to the largest tempo distortions in these order-specific TFRs. We can therefore say that, taking tempo of fertility into account, the quantum of fertility for Spain is actually consistently much higher than unadjusted TFR figures suggest over the period from 1975 to 2016.
+
+```{r, echo = FALSE}
+#Plot of TFR's for  third births.
+plot(bftfr3plot, ylim = c(0.08, 0.48), type = "l", col = "orange", main = "TFR for third births", ylab = "TFR", xlab = "Year")
+lines(tfr3plot, lty = 2, col = "orange")
+legend(2000, 0.48, legend = c("Unadjusted TFR", "Tempo-adjusted TFR"), col = c("orange", "orange"), lty = 2:1, cex = 0.8)
+
+#Plot of TFR's for  fourth births.
+plot(bftfr4plot, type = "l", col = "green", main = "TFR for fourth births", ylab = "TFR", xlab = "Year")
+lines(tfr4plot, lty = 2, col = "green")
+legend(2000, 0.23, legend = c("Unadjusted TFR", "Tempo-adjusted TFR"), col = c("green", "green"), lty = 2:1, cex = 0.8)
+
+#Plot of TFR's for  fifth births and above.
+plot(bftfr5pplot, type = "l", col = "blue", main = "TFR for fifth and above births", ylab = "TFR", xlab = "Year")
+lines(tfr5pplot, lty = 2, col = "blue")
+legend(2000, 0.24, legend = c("Unadjusted TFR", "Tempo-adjusted TFR"), col = c("blue", "blue"), lty = 2:1, cex = 0.8)
+```
+
+For third, fourth, and fifth and above birth orders, there is no signficant difference between the adjusted and the unadjusted TFRs. This is because the MAC for these three birth order categories were largely unchanging. While the adjusted TFR for third births may be said to be slightly higher than its corresponding unadjusted TFR for 1980 to 2000, the difference in the quantum of fertilities is not as significant as the lower birth orders. This analysis thus concludes that for these three uppermost birth orders, tempo distortions did not significantly affect TFR values in Spain for 1975 to 2016.
+
+Overall, this analysis finds that while mothers in Spain were postponing first and second births, they were in general not postponing third and above births. Aggregate fertility rates in Spain have also not been at the replacement level of 2.1 since the early 1980s.
+
+Finally, while the Bongaarts-Feeney adjustment provides an improved reading of period fertility rates by reducing tempo distortion, it is not a perfect construction. It simply takes the average change in the mean age of childbearing between year $t$ and $t+1$ in its construction of $r$. This assumes that the change in MAC is or can be approximated to a linear trend. While this on average may be produce sufficiently robust estimates for most normal fertility schedules, it might not be a good estimator for fertility rates under abnormal conditions such as the 2008 financial crisis or other systemic shocks. Such shocks may cause cause women to delay or hasten their age of childbearing in a non-linear manner between calendar year $t$ and $t+1$ which the arithmetic mean does not accurately capture.
+
+## Question 3
+
+The file 'fltper_1x1.txt' contains period life tables for the UK female population from 1922-2016 and 'mltper_1x1.txt' provides the same data for the male population. 'GBR_NPasfrRR.txt' contains data on period age-specific fertility rates for the UK from 1974 until 2016. 'Population.txt' provides data on population size by age groups. 'migration_estimates_ons.xlsx' provides data on net migration estimates for the UK, disaggregated by sex by broad age groups for 2016.
+
+```{r, echo = TRUE}
+#We save the excel file provided containing migration estimates into a .txt format for easier reading. 
+#The migration estimates used in part (b) will hence be read from the file 'migration_estimates_ons.txt'.
+```
+
+a) Using the data on mortality, fertility and age structure for 2016 as the base year, project the female population and male population separately for the UK until 2050 assuming a population closed to migration with unchanging mortality and fertility rates.
+
+This analysis will be using the cohort component projection model to project the UK population until 2050 assuming a closed population and unchanging mortality and fertility. The Leslie Matrix - a projection matrix that contains the information on mortality and fertility (and migration for open population models used later) - will be used to project an initial population forward. This will first need to be constructed, and 2016 will be the base year used.
+
+```{r, echo = TRUE}
+#We input data to construct the Leslie Matrix.
+#This is for the population projection of a closed population model with unchanging rates.
+
+#Read female and male life tables for the UK population and subset 2016 data, taking note of the 110+ open age interval.
+lt.female <- read.table("fltper_1x1.txt", skip = 1, header = TRUE)
+lt.female <- transform(lt.female, Age = as.numeric(sub("[+-]", "", as.character(Age))))
+lt.female <- subset(lt.female, Year == 2016)
+rownames(lt.female) <- c()
+
+head(lt.female)
+tail(lt.female)
+
+lt.male <- read.table("mltper_1x1.txt", skip = 1, header = TRUE)
+lt.male <- transform(lt.male, Age = as.numeric(sub("[+-]", "", as.character(Age))))
+lt.male <- subset(lt.male, Year == 2016)
+rownames(lt.male) <- c()
+
+head(lt.male)
+tail(lt.male)
+
+#Read UK age-specific fertility rates and subset 2016 data, taking note of the 12- and 55+ open age intervals.
+asfr <- read.table("GBR_NPasfrRR.txt", skip = 2, header = TRUE)
+asfr <- transform(asfr, Age = as.numeric(sub("[+-]", "", as.character(Age))))
+asfr <- subset(asfr, Year == 2016)
+rownames(asfr) <- c()
+
+#Transform ASFR 2016 data into format appropriate for Leslie Matrix with 111 rows.
+frates <- c(rep(0, 11), asfr[, 3], rep(0, 56))
+length(frates)
+
+#Read UK population size by age groups and subset 2016 data, taking note of the 110+ open age interval.
+pop <- read.table("Population.txt", skip = 1, header = TRUE)
+pop <- transform(pop, Age = as.numeric(sub("[+-]", "", as.character(Age))))
+pop <- subset(pop, Year == 2016)
+rownames(pop) <- c()
+
+#Subset female and male population for 2016.
+fpop <- c(pop[, 3])
+mpop <- c(pop[, 4])
+
+length(fpop)
+length(mpop)
+```
+
+Now that the data has been formatted appropriately, we can begin building the Leslie Matrix. We first project the female population. The UK sex ratio at birth for 2016 is 1.05 according to a UK government report (Department of Health and Social Care, 2018).
+
+```{r, echo = TRUE}
+#Construct the Leslie Matrix.
+mat.f <- matrix(0, nrow = nrow(lt.female), ncol = nrow(lt.female))
+
+#Compute survivorship ratios from the female life table.
+Lratio <- rep(NA, times = nrow(lt.female) - 1)
+for (i in 1:length(Lratio)){
+  Lratio[i] <- lt.female$Lx[i + 1]/lt.female$Lx[i]
+}
+
+#Place the survivorship ratios on the sub-diagonal of the matrix.
+mat.f[row(mat.f) == col(mat.f) + 1] <- Lratio
+
+#For the final (open-ended) age interval, we compute the survival using Tx.
+mat.f[nrow(mat.f), ncol(mat.f)] <- (lt.female$Tx[length(lt.female$Tx)]/lt.female$Tx[length(lt.female$Tx) - 1])
+
+#Compute the first row of the Leslie Matrix (fertility).
+#For all rates we multiply a newborn survivorship constant to account for the survival of newborns that survive until the next projection step.
+srb <- 1.05
+const.f <- (1/(1 + srb))*(lt.female$Lx[1])/(2*lt.female$lx[1])
+
+#Fill in the first row of the Leslie Matrix.
+firstrow <- const.f*(frates[1:110] + (frates[2:111]*Lratio[1:110]))
+mat.f[1, ] <- c(firstrow, 0)
+
+#This function multiplies the Leslie Matrix with the initial population vector for the female population.
+projectionf <- function(mat, pop, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project <- mat
+      proj <- project%*%pop
+    }
+    if (i > 1) {
+      project <- project%*%mat
+      proj <- project%*%pop
+    }
+  }
+  return(proj)
+}
+
+#Build database for UK female population projection from 2016 to 2050.
+projpopf.plot <- rep(NULL)
+for (t in c(1:34)) {
+  projpop <- projectionf(mat = mat.f, pop = fpop, time = t)
+  projpop <- sum(projpop)
+  projpopf.plot <- rbind(projpopf.plot, projpop)
+}
+projpopf.plot <- rbind(sum(fpop), projpopf.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+projpopf.plot <- cbind(projdate, projpopf.plot)
+colnames(projpopf.plot) <- c("Year", "Population Size")
+rownames(projpopf.plot) <- c()
+
+#Check resulting data.
+head(projpopf.plot)
+tail(projpopf.plot)
+
+#Plot of UK female population projection.
+plot(projpopf.plot, main = "UK Closed Female Population Projection from 2016 to 2050", ylab = "Population Size", xlab = "Year", sub = "Base year = 2016", type = "l", col = "red")
+```
+
+Next, the projection for the UK's male population is computed slightly differently. Since fertility rates are expressed as births per woman instead of per man, the UK male population is computed and projected from women's fertility rates and men's survival rates. Separate matrices must be used in the multiplication.
+
+```{r, echo = TRUE}
+#Construct the two matrices needed for the separate multiplications.
+mat.m1 <- matrix(0, nrow = nrow(lt.male), ncol = nrow(lt.male))
+mat.m2 <- matrix(0, nrow = nrow(lt.male), ncol = nrow(lt.male))
+
+#Compute the first row of the Leslie Matrix (fertility).
+#For all rates we multiply a newborn survivorship constant to account for the survival of newborns that survive until the next projection step.
+srb <- 0.95
+const.m <- (1/(1 + srb))*(lt.male$Lx[1])/(2*lt.male$lx[1])
+
+#Compute survivorship ratios from the male life table.
+Lratio <- rep(NA, times = nrow(lt.male) - 1)
+for (i in 1:length(Lratio)) {
+  Lratio[i] <- lt.male$Lx[i + 1]/lt.male$Lx[i]
+}
+
+#Fill in the first row in the first matrix, using the 'frates' object from before as we are still using female fertility rates.
+firstrow <- const.m*(frates[1:110] + (frates[2:111]*Lratio[1:110]))
+mat.m1[1, ] <- c(firstrow, 0)
+
+#Place the survivorship ratios on the sub-diagonal of the second matrix.
+mat.m2[row(mat.m2) == col(mat.m2) + 1] <- Lratio
+
+#For the final (open-ended) age interval, we compute the survival using Tx.
+mat.m2[nrow(mat.m2), ncol(mat.m2)] <- (lt.male$Tx[length(lt.male$Tx)]/lt.male$Tx[length(lt.male$Tx) - 1])
+
+#This function multiplies the two Leslie Matrices with their respective initial population vectors for the male population.
+projectionm <- function(mat1, fpop, mat2, mpop, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project1 <- mat1
+      proj1 <- project1%*%fpop
+      project2 <- mat2
+      proj2 <- project2%*%mpop
+      proj <- proj1 + proj2
+    }
+    if (i > 1) {
+      project1 <- project1%*%(mat1 + mat2)
+      proj1 <- project1%*%fpop
+      project2 <- project2%*%(mat1 + mat2)
+      proj2 <- project2%*%mpop
+      proj <- proj1 + proj2
+    }
+  }
+  return(proj)
+}
+
+#Build database for UK male population projection from 2016 to 2050.
+projpopm.plot <- rep(NULL)
+for (t in c(1:34)) {
+  projpop <- projectionm(mat1 = mat.m1, fpop = fpop, mat2 = mat.m2, mpop = mpop, time = t)
+  projpop <- sum(projpop)
+  projpopm.plot <- rbind(projpopm.plot, projpop)
+}
+projpopm.plot <- rbind(sum(mpop), projpopm.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+projpopm.plot <- cbind(projdate, projpopm.plot)
+colnames(projpopm.plot) <- c("Year", "Population Size")
+rownames(projpopm.plot) <- c()
+
+#Check resulting data.
+head(projpopm.plot)
+tail(projpopm.plot)
+
+#Plot of UK male population projection.
+plot(projpopm.plot, main = "UK Closed Male Population Projection from 2016 to 2050", ylab = "Population Size", xlab = "Year", sub = "Base year = 2016", type = "l", col = "blue")
+
+#Both plots in a single figure for ease of comparison.
+plot(projpopf.plot, ylim = c(31650000, 33400000), main = "UK Closed Population Projections by Sex from 2016 to 2050", ylab = "Population Size", xlab = "Year", sub = "Base year = 2016", type = "l", col = "red")
+lines(projpopm.plot, col = "blue")
+legend(2044, 33380000, legend = c("Female", "Male"), col = c("red", "blue"), lty = 1, cex = 0.8)
+```
+
+As seen from the above figure using 2016 as the base year for the population projections, there was a sizable difference between the initial size of the male population (32,040,374) and the female population (32,987,402), taking the value of 947,028 or approximately one million. Both sexes display similar trends, with a rising population (brought about from increased life expectancies and relatively high survival rates in old age) peaking between 2025 and 2030 before falling (since fertility rates remain below the replacement level of 2.1). Given 2016 fertility rates, survival ratios, and population age structures (also assuming a closed population), the difference in the numbers of men and women in the UK are also projected to reduce.
+
+b) Using the data provided, project the female population and male population separately for the UK until 2050 assuming an open population with unchanging mortality and fertility rates, and net migration counts. As the migration data are coarser than the age-specific mortality and fertility data, assume the age-specific migration counts are evenly divided across the ages in each age bin.
+
+Relaxing the assumption of a closed population, this analysis will now project UK male and female populations in an open population using the given migration data. Since we are to assume that age-specific migration counts are evenly divided across the ages in each age bin, for this formal calculation this analysis will proceed with the assumption that this also holds for the open age intervals.
+
+```{r, echo = TRUE}
+#Read migration data.
+migration <- read.table("migration_estimates_ons.txt", skip = 1, header = TRUE)
+print(migration)
+
+#We create a vector for migration data for males and females in the UK for 2016.
+migration.m <- c(rep(17000/15, 15), rep(63000/10, 10), rep(46000/20, 20), rep(1000/15, 15), rep(2000/51, 51))
+migration.f <- c(rep(5000/15, 15), rep(62000/10, 10), rep(57000/20, 20), rep(4000/15, 15), rep(3000/51, 51))
+
+#Check length of migration vectors.
+length(migration.m)
+length(migration.f)
+
+#Write functions for projecting male and female populations in an open population.
+#This projects an open female population under the assumption of unchanging migration.
+openprojectionf <- function(mat, pop, migration, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project <- mat
+      proj <- (project%*%(pop + migration)) + migration
+    }
+    if (i > 1) {
+      project <- project%*%mat
+      proj <- (project%*%(pop + migration)) + migration
+    }
+  }
+  return(proj)
+}
+
+#Format data.
+openprojpopf.plot <- rep(NULL)
+for (t in c(1:34)) {
+  openprojpop <- openprojectionf(mat = mat.f, pop = fpop, migration = migration.f, time = t)
+  openprojpop <- sum(openprojpop)
+  openprojpopf.plot <- rbind(openprojpopf.plot, openprojpop)
+}
+openprojpopf.plot <- rbind(sum(fpop + migration.f + mat.f%*%migration.f), openprojpopf.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+openprojpopf.plot <- cbind(projdate, openprojpopf.plot)
+colnames(openprojpopf.plot) <- c("Year", "Population Size")
+rownames(openprojpopf.plot) <- c()
+
+#Check data.
+head(openprojpopf.plot)
+tail(openprojpopf.plot)
+
+#Plot the data.
+plot(openprojpopf.plot, main = "UK Open Female Population Projection from 2016 to 2050", ylab = "Population Size", xlab = "Year", sub = "Base year = 2016", type = "l", col = "red")
+
+#For male projections, the function considers female migrants and factors this female population into UK fertility rates.
+openprojectionm <- function(mat1, fpop, mat2, mpop, fmigration, mmigration, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project1 <- mat1
+      proj1 <- (project1%*%(fpop + fmigration))
+      project2 <- mat2
+      proj2 <- (project2%*%(mpop + mmigration)) + mmigration
+      proj <- proj1 + proj2
+    }
+    if (i > 1) {
+      project1 <- project1%*%(mat1 + mat2)
+      proj1 <- (project1%*%(fpop + fmigration))
+      project2 <- project2%*%(mat1 + mat2)
+      proj2 <- (project2%*%(mpop + mmigration)) + mmigration
+      proj <- proj1 + proj2
+    }
+  }
+  return(proj)
+}
+
+#Format data.
+openprojpopm.plot <- rep(NULL)
+for (t in c(1:34)) {
+  openprojpop <- openprojectionm(mat1 = mat.m1, fpop = fpop, mat2 = mat.m2, mpop = mpop, fmigration = migration.f, mmigration = migration.m, time = t)
+  openprojpop <- sum(openprojpop)
+  openprojpopm.plot <- rbind(openprojpopm.plot, openprojpop)
+}
+openprojpopm.plot <- rbind(sum(mpop + migration.m + (mat.m1 + mat.m2)%*%migration.m), openprojpopm.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+openprojpopm.plot <- cbind(projdate, openprojpopm.plot)
+colnames(openprojpopm.plot) <- c("Year", "Population Size")
+rownames(openprojpopm.plot) <- c()
+
+#Check data.
+head(openprojpopm.plot)
+tail(openprojpopm.plot)
+
+#Plot the data.
+plot(openprojpopm.plot, main = "UK Open Male Population Projection from 2016 to 2050", ylab = "Population Size", xlab = "Year", sub = "Base year = 2016", type = "l", col = "blue")
+```
+
+The open and closed population projections will be plotted together for ease of comparison.
+
+```{r, echo = TRUE}
+#Plot the open and closed models together.
+plot(openprojpopf.plot, ylim = c(31650000, 33750000), main = "UK Population Projections by Sex from 2016 to 2050", ylab = "Population Size", xlab = "Year", sub = "Base year = 2016", type = "l", col = "red")
+lines(projpopf.plot, col = "red", lty = 2)
+lines(openprojpopm.plot, col = "blue", lty = 1)
+lines(projpopm.plot, col = "blue", lty = 2)
+legend(2040, 33730000, legend = c("Open Female", "Closed Female", "Open Male", "Closed Male"), col = c("red", "red", "blue", "blue"), lty = 1:2, cex = 0.8)
+```
+
+c) The scenarios above assume unchanging rates. Construct a scenario informed by plausible assumptions about expected changes in mortality, fertility and migration to project the UK population until 2050. You may draw on assumptions used by the Office of National Statistics, the UN or other organisations that issue population projections in your scenario. Justify your decisions with appropriate references to the appropriate literature. How realistic are these projections likely to be? Comment on the different sources of uncertainty underlying your projection.
+
+The scenarios projected above are formal calculations on the deterministic outcomes of the 2016 UK population based on the same year's mortaility, fertility, and migration rates. In reality, each of these things are not constant, and to move from a projection to a forecast, this analysis now relaxes the assumption of unchanging rates. Drawing on forecasts from the UK Office for National Statistics (ONS, 2017), this analysis will factor in year-on-year changes in fertility and survivorship to construct a scenario under a regime of changing rates. 
+
+Guided by ONS data, this analysis will seek to develop an internally consistent population forecast. Therefore, it will amend the projection functions used in the earlier parts, turning fertility, mortality, amd migration from constants to variables which themselves vary over time. It first constructs a closed population forecast by sex, before moving onto an open population forecast. Finally, it then comments on the different sources of uncertainty and how these forecasts may not present a fully accurate picture of the future UK population.
+
+```{r, echo = TRUE}
+#To forecast the UK's closed female population, we change the Leslie Matrix. The initial population does not change.
+#We select the first row of the Leslie Matrix representing age-specific fertility rates.
+mat.f1 <- mat.f[1,]
+mat.f1 <- rbind(mat.f1, matrix(0, nrow = 110, ncol = 111))
+
+#We then select the sub-diagonal of the Leslie Matrix.
+mat.f2 <- mat.f[2:111,]
+mat.f2 <- rbind(matrix(0, nrow = 1, ncol = 111), mat.f2)
+
+#Edit the female projection function used earlier to account for changing rates.
+#We crudely assume a 0.05% increase in fertility year-on-year and 0.1% increase in survivorship year-on-year.
+forecast.f <- function(mat1, pop1, mat2, pop2, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project1 <- mat1
+      proj1 <- project1%*%pop1
+      project2 <- mat2
+      proj2 <- project2%*%pop2
+      proj <- proj1 + proj2
+    }
+    if (i > 1) {
+      project1 <- project1%*%(1.0005*mat1 + 1.001*mat2)
+      proj1 <- project1%*%pop1
+      project2 <- project2%*%(1.0005*mat1 + 1.001*mat2)
+      proj2 <- project2%*%pop2
+      proj <- proj1 + proj2
+    }
+  }
+  return(proj)
+}
+
+forecastf.plot <- rep(NULL)
+for (t in c(1:34)) {
+  forecastpop <- forecast.f(mat1 = mat.f1, pop1 = fpop, mat2 = mat.f2, pop2 = fpop, time = t)
+  forecastpop <- sum(forecastpop)
+  forecastf.plot <- rbind(forecastf.plot, forecastpop)
+}
+forecastf.plot <- rbind(sum(fpop), forecastf.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+forecastf.plot <- cbind(projdate, forecastf.plot)
+colnames(forecastf.plot) <- c("Year", "Population Size")
+rownames(forecastf.plot) <- c()
+
+#Check the data.
+head(forecastf.plot)
+tail(forecastf.plot)
+
+#Repeat the process for the male population. We have already separated the first row and sub-diagonal of the matrix.
+#We assume a 0.05% year-on-year increase in (female) fertility but a 0.08% year-on-year increase in survivorship instead. 
+forecast.m <- function(mat1, fpop, mat2, mpop, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project1 <- mat1
+      proj1 <- project1%*%fpop
+      project2 <- mat2
+      proj2 <- project2%*%mpop
+      proj <- proj1 + proj2
+    }
+    if (i > 1) {
+      project1 <- project1%*%(1.0005*mat1 + 1.0008*mat2)
+      proj1 <- project1%*%fpop
+      project2 <- project2%*%(1.0005*mat1 + 1.0008*mat2)
+      proj2 <- project2%*%mpop
+      proj <- proj1 + proj2
+    }
+  }
+  return(proj)
+}
+
+forecastm.plot <- rep(NULL)
+for (t in c(1:34)) {
+  forecastpop <- forecast.m(mat1 = mat.m1, fpop = fpop, mat2 = mat.m2, mpop = mpop, time = t)
+  forecastpop <- sum(forecastpop)
+  forecastm.plot <- rbind(forecastm.plot, forecastpop)
+}
+forecastm.plot <- rbind(sum(mpop), forecastm.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+forecastm.plot <- cbind(projdate, forecastm.plot)
+colnames(forecastm.plot) <- c("Year", "Population Size")
+rownames(forecastm.plot) <- c()
+
+#Check the data.
+head(forecastm.plot)
+tail(forecastm.plot)
+
+#Plot the trends together.
+plot(forecastf.plot, main = "UK Closed Population Forecasts and Projections by Sex", ylab = "Population Size", 
+     xlab = "Year", sub = "Base year = 2016", ylim = c(31600000, 34250000), type = "l", col = "red", lty = 1)
+lines(projpopf.plot, col = "red", lty = 2)
+lines(forecastm.plot, col = "blue", lty = 1)
+lines(projpopm.plot, col = "blue", lty = 2)
+legend(2040, 34240000, legend = c("Female Forecast", "Female Projection", "Male Forecast", "Male Projection"), 
+       col = c("red", "red", "blue", "blue"), lty = 1:2, cex = 0.8)
+```
+
+The above plot is derived from factoring in a 0.05% year-on-year change in female fertility rates, as well as a 0.1% increase in female survivorship rates year-on-year. For male survivorship, this analysis assumes a 0.08% year-on-year increase instead. This results in an internally consistent population forecast under a regime of changing rates. As observed, the UK population forecasts at all points predict a higher male and female population than their initial respective population projections under constant rates. We note that because the marginal increase in fertility is not enough to push it above a fertility rate of 2.1 - ONS predicts long-term UK TFR to be at 1.84 (ONS, 2017) - the population forecast still shows a declining population from 2030 onwards.
+
+This analysis now forecasts the UK population relaxing the assumption of a closed population.
+
+```{r, echo = TRUE}
+#This function forecasts an open female UK population, assuming a 0.1% year-on-year increase in net migration.
+openforecast.f <- function(mat1, pop, mat2, fmigration, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project1 <- mat1
+      proj1 <- (project1%*%(pop + fmigration))
+      project2 <- mat2
+      proj2 <- (project2%*%(pop + fmigration)) + fmigration
+      proj <- proj1 + proj2
+    }
+    if (i > 1) {
+      project1 <- project1%*%(1.0005*mat1 + 1.001*mat2)
+      proj1 <- (project1%*%(pop + 1.001*fmigration))
+      project2 <- project2%*%(1.0005*mat1 + 1.001*mat2)
+      proj2 <- (project2%*%(pop + 1.001*fmigration)) + 1.001*fmigration
+      proj <- proj1 + proj2
+    }
+  }
+  return(proj)
+}
+
+openforecastf.plot <- rep(NULL)
+for (t in c(1:34)) {
+  forecastpop <- openforecast.f(mat1 = mat.f1, pop = fpop, mat2 = mat.f2, fmigration = migration.f, time = t)
+  forecastpop <- sum(forecastpop)
+  openforecastf.plot <- rbind(openforecastf.plot, forecastpop)
+}
+openforecastf.plot <- rbind(sum(mpop), openforecastf.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+openforecastf.plot <- cbind(projdate, openforecastf.plot)
+colnames(openforecastf.plot) <- c("Year", "Population Size")
+rownames(openforecastf.plot) <- c()
+openforecastf.plot <- openforecastf.plot[-1,]
+
+#This forecasts the corresponding male population, also assuming a 0.1% year-on-year increase in net migration
+openforecast.m <- function(mat1, fpop, mat2, mpop, fmigration, mmigration, time) {
+  for (i in 1:time) {
+    if (i == 1) {
+      project1 <- mat1
+      proj1 <- (project1%*%(fpop + fmigration))
+      project2 <- mat2
+      proj2 <- (project2%*%(mpop + mmigration)) + mmigration
+      proj <- proj1 + proj2
+    }
+    if (i > 1) {
+      project1 <- project1%*%(1.0005*mat1 + 1.0008*mat2)
+      proj1 <- (project1%*%(fpop + 1.001*fmigration))
+      project2 <- project2%*%(1.0005*mat1 + 1.0008*mat2)
+      proj2 <- (project2%*%(mpop + 1.001*mmigration)) + 1.001*mmigration
+      proj <- proj1 + proj2
+    }
+  }
+  return(proj)
+}
+
+openforecastm.plot <- rep(NULL)
+for (t in c(1:34)) {
+  forecastpop <- openforecast.m(mat1 = mat.m1, fpop = fpop, mat2 = mat.m2, mpop = mpop, fmigration = migration.f, mmigration = migration.m, time = t)
+  forecastpop <- sum(forecastpop)
+  openforecastm.plot <- rbind(openforecastm.plot, forecastpop)
+}
+openforecastm.plot <- rbind(sum(mpop), openforecastm.plot)
+projdate <- matrix(2016:2050, byrow = FALSE)
+openforecastm.plot <- cbind(projdate, openforecastm.plot)
+colnames(openforecastm.plot) <- c("Year", "Population Size")
+rownames(openforecastm.plot) <- c()
+openforecastm.plot <- openforecastm.plot[-1,]
+
+#Plot the trends.
+plot(openforecastf.plot, main = "UK Open Population Forecasts and Projections by Sex", ylab = "Population Size", 
+     xlab = "Year", sub = "Base year = 2016", ylim = c(32000000, 34600000), xlim = c(2015, 2050), type = "l", col = "red", lty = 1)
+lines(openprojpopf.plot, col = "red", lty = 2)
+lines(openforecastm.plot, col = "blue", lty = 1)
+lines(openprojpopm.plot, col = "blue", lty = 2)
+legend(2040, 34600000, legend = c("Female Forecast", "Female Projection", "Male Forecast", "Male Projection"), col = c("red", "red", "blue", "blue"), lty = 1:2, cex = 0.8)
+```
+
+Firstly, it must be noted that the projections and forecasts of both sexes for 2016 to 2017 (for both open and closed populations) are equal. This is because, by construction, the change in rates only enter into effect once the year count exceeds 1 (i.e. 2017 and onwards). 
+
+The plot above uses the same year-on-year changes in survivorship and fertility as in the previous closed population forecast. Additionally, it assumes that net migration will increase by 0.1% year-on-year for both male and female migration. The models used above are simple in that they place a coefficient in front of the matrices informing fertility, survivorship, and migration. It also assumes year-on-year changes (the first derivative) are constant when in fact they need not be.
+
+This anaysis will now lay out and comment on several sources of uncertainty in the forecasts.
+
+Migration estimates are the most problematic because they would be most exposed to exogenous shocks which the model cannot predict endogenously. The effect of Brexit on migration, for example, remains to be seen. Even if the net migration does not significantly change - ONS data (ONS, 2019) show an initial decrease immediately after the referendum to September 2017, but a slight increase throughout from September 2017 to September 2018 - the composition of migrants is likely to change. This is significant because it is likely to affect fertility and survivorship ratios at least in the first generation, which is within the scope of this forecasted time period. There is no reason to suppose first-generation immigrants will take on the fertility schedules of native-born UK citizens. Nonetheless, in this national context, immigrants make up a relatively small proportion of the total UK population projected.
+
+Fertility and mortality also present demographers with uncertainties. While Oeppen and Vaupel (2002) predict that record-holding life expectancies are expected to increase linearly for the forseeable future, what is more important is average life expectancy figures. The gains in average life expectancies for both men and women are far less optimistic and robust compared to Oeppen and Vaupel's 2002 findings (ONS, 2017). Additionally, there is evidence that inequalities in life expectancy is increasing (Cutler, 2008) and the increasing heterogeneity in lifespans makes constructing a robust forecast all the more difficult. 
+
+Fertility, on the other hand, may be confounded by issues surrounding the changing tempo of births by birth order. Indeed, the low TFR might in fact be a result of delayed births which this forecast did not explicitly take into account.
+
+Lastly, Taleb (2007) also comments on uncertainties around any form of forecasting, be they economic, demographic, or otherwise. One problem he highlights is the problem of ergodicity. Internally consistent forecasts use past data and trends to make predictions about the future in a way which assumes that the future is consistent with the past. However, Taleb's Black Swan theory suggests that events which have been dominant in significantly changing the course of history (wars, great recessions, or groundbreaking inventions) have in fact had extremely small probabilities of occuring conditioning on information known prior to the event. Taleb suggests that the probability of such events occuring are non-computable due to the nature of small probabilities. Post-hoc rationalisation does not count. In this case, trying to reliably assign a probability to when (and if) artificial wombs will become a viable means of human conception is a fool's errand. Yet its successful proliferation is likely to significantly alter fertility rates. So too are attempts at assigning probabilities to economic and political moves which may affect migration and survivorship rates. Good forecasts are therefore highly difficult to construct.
+
+#References
+
+Cutler, D. M., Meara, E. R., Richards, S. (2008). The gap gets bigger: changes in mortality and life expectancy by education, 1981-2000. Health Affairs.
+
+Department of Health and Social Care. (2018). Sex Ratios at Birth in Great Britain, 2012-16. Retrieved from https://assets.publishing.service.gov.uk/government/uploads/system/uploads/attachment_data/file/750218/Sex_ratios_at_birth_2012-16.pdf.
+
+Taleb, N. N. (2007). The Black Swan: The Impact of the Highly Improbable. New York: Random House and Penguin Books.
+
+Oeppen, J., and Vaupel, J. W. (2002). Broken limits to life expectancy. Science, 296(5570), 1029.
+
+Office for National Statistics. (2017). Fertility Assumptions. Retrived from https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/compendium/nationalpopulationprojections/2016basedprojections/fertilityassumptions.
+
+Office for National Statistics. (2019). Migration Statistics Quarterly Report: February 2019. Retrieved from https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/internationalmigration/bulletins/migrationstatisticsquarterlyreport/february2019.
+
+Office for National Statistics. (2017). Mortality Rates (qx), Principal Projection, United Kingdom. Retrieved from https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies/datasets/mortalityratesqxprincipalprojectionunitedkingdom.
+
+Office for National Statistics. (2017). National Population Projections. Retrieved from https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationprojections/datasets/2014basednationalpopulationprojectionstableofcontents.
