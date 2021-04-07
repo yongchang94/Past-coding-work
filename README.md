@@ -4,7 +4,7 @@ Please see the files here for examples of my past work using both R and Python. 
 
 Three noteworthy projects are the 'Demographic_Analysis_Assignment_2', 'Replication_Project', and 'MPhil Sociology and Demography-Thesis'. I have attached the R/markdown script and the corresponding PDF/html files.
 
-The Demographic Analysis submission required building a dataset to investigate life expectancy, fertility rates, and population change in select countries. The Replication Project replicated and extended multiple studies' regression models. And the Thesis described and analysed parental involvement in childcare and its effects.
+The Demographic Analysis submission required building a dataset to investigate life expectancy, fertility rates, and population change in select countries. The Replication Project replicated and extended multiple studies' regression models analysing child development. And the Thesis described and analysed parental involvement in childcare and its effects.
 
 I would direct you to the Demographic Analysis html file first (please see the emailed copy if viewing issues arise), followed by the Replication. The Thesis is the longest of all.
 
