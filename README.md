@@ -8,6 +8,6 @@ The Demographic Analysis submission required building a dataset to investigate l
 
 I would direct you to the Demographic Analysis html file first (please see the emailed copy if viewing issues arise), followed by the Replication. The Thesis is the longest of all.
 
-I have also included class work on social network analysis for added reference. These are the 'Chin_OSN20' jupyter notebook files. They are just samples of my weekly homework, but I thought it would be good to have on record as well.
+I have also included class work on social network analysis for added reference. These are the 'Chin_OSN20' jupyter notebook files. These are just samples of weekly assignment submissions, but I thought it would be good to have on record as well.
 
 Please reach out if there's anything else.
