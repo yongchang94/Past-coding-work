@@ -5,7 +5,7 @@ Please see the files here for examples of my past work using both R and Python. 
 Four noteworthy projects are the 'Demographic_Analysis_Assignment_2', 'OSN Summative', 'Replication_Project', and 'MPhil Sociology and Demography-Thesis'. I have attached the R/markdown script and the corresponding PDF/html files.
 
 - The Demographic Analysis submission required building a dataset to investigate life expectancy, fertility rates, and population change.
-- The OSN (Online Social Network) project reanalysed a study of information proliferation in a network analysis framework.
+- The OSN (Online Social Networks) project reanalysed a study of information proliferation in a network analysis framework.
 - The Replication Project replicated and extended multiple studies' regression models analysing child development.
 - And the Thesis built a dataset to describe and analyse parental involvement in childcare and its effects.
 
