@@ -2,7 +2,7 @@
 
 setwd("C:/Users/yongc/Documents/Work Files/University of Oxford/Course Material/Year 2/Online Social Networks/Summative Project/Ethnic Networks")
 
-#This loads the saved data into the global environment
+#This loads the saved data into the global environment (created by running the below code separately first)
 load("C:/Users/yongc/Documents/Work Files/University of Oxford/Course Material/Year 2/Online Social Networks/Summative Project/Ethnic Networks/ws_withnetworks.RData")
 
 library(tidyverse)
