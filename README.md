@@ -2,7 +2,7 @@
 
 Please see the files here for examples of my past work using both R and Python. They contain examples of code to build and clean large datasets, before analysing and drawing insights from them. All data wrangling and analysis was done by myself.
 
-Four noteworthy projects are the 'Demographic_Analysis_Assignment_2', 'OSN Summative', 'Replication_Project', and 'MPhil Sociology and Demography-Thesis'. I have attached the R/markdown script and the corresponding PDF/html files.
+Four noteworthy projects are the 'Demographic_Analysis_Assignment_2', 'OSN Summative', 'Replication_Project', and 'MPhil Sociology and Demography-Thesis'. I have attached the R/markdown script and the corresponding PDF/html files for viewing.
 
 - The Demographic Analysis submission required building a dataset to investigate life expectancy, fertility rates, and population change. Data was sourced from the Human Mortality Database and the Human Fertility Database, and was loaded and manipulated with code.
 - The OSN (Online Social Networks) project reanalysed a study of information proliferation in a network analysis framework using data provided by the original author.
