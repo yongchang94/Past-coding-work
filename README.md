@@ -9,7 +9,7 @@ Four noteworthy projects are the 'Demographic_Analysis_Assignment_2', 'OSN Summa
 - The Replication Project replicated and extended multiple studies' regression models analysing child development. The raw data was sourced independently from the UK Millennium Cohort Study database.
 - And the Thesis built a dataset to describe and analyse parental involvement in childcare and its effects. Data was also sourced from the Millennium Cohort Study.
 
-I would direct you to the Demographic Analysis .html file (please see the emailed copy if viewing issues arise) and the OSN Summative first, followed by the Replication and the Thesis. The Thesis is the longest of all.
+I would direct you to the Demographic Analysis .html file (please see the emailed copy if viewing issues arise) and the OSN Summative first, followed by the Replication and the Thesis. The Thesis is the longest of all. 
 
 I have also included class work on social network analysis for added reference. These are the 'Chin_OSN20' jupyter notebook files. These are just samples of weekly assignment submissions, but I thought it would be good to have on record as well.
 
